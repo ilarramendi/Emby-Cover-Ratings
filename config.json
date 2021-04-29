@@ -39,16 +39,27 @@
                     "TMDB": true
                }
           },
+          "certifications": {
+               "config": {
+                    "NC-17": true,
+                    "R": true,
+                    "PG-13": false,
+                    "PG": false,
+                    "G": false,
+                    "NR": false
+               }
+          },
           "width": 1920,
+          "height": 1080,
           "generateImages": true
      },
      "movie": {
           "mediainfo": {
                "position": "top",
                "alignment": "center",
-               "imgSize": "230px",
-               "padding": "35px",
-               "space": "50px",
+               "imgSize": "210px",
+               "padding": "35px 15px",
+               "space": "30px",
                "color": "#1004",
                "config": {
                     "AVC": true,
@@ -60,7 +71,8 @@
                     "UHD-HDR": true,
                     "SDR": true,
                     "UNDEFINED": false
-               }
+               },
+               "audio": "EN,ES,JA,RU"
           },
           "ratings": {
                "position": "left",
@@ -80,7 +92,19 @@
                     "TMDB": true
                }
           },
-          "width": 2000
+          "certifications": {
+               "config": {
+                    "NC-17": true,
+                    "R": true,
+                    "PG-13": false,
+                    "PG": false,
+                    "G": false,
+                    "NR": false
+               }
+          },
+          "output": "folder.jpg",
+          "width": 2000,
+          "height": 3000
      },
      "backdrop": {
           "mediainfo": {
@@ -120,7 +144,9 @@
                     "TMDB": true
                }
           },
-          "width": 1920
+          "output": "backdrop.jpg",
+          "width": 1920,
+          "height": 1080
      },
      "season": {
           "mediainfo": {
@@ -160,14 +186,26 @@
                     "TMDB": true
                }
           },
-          "width": 1200
+          "certifications": {
+               "config": {
+                    "NC-17": true,
+                    "R": true,
+                    "PG-13": false,
+                    "PG": false,
+                    "G": false,
+                    "NR": false
+               }
+          },
+          "output": "folder.jpg",
+          "width": 2000,
+          "height": 3000
      },
      "tv": {
           "mediainfo": {
                "position": "top",
                "alignment": "center",
-               "imgSize": "115px",
-               "padding": "15px",
+               "imgSize": "210px",
+               "padding": "35px 15px",
                "space": "30px",
                "color": "#1004",
                "config": {
@@ -180,18 +218,19 @@
                     "UHD-HDR": true,
                     "SDR": true,
                     "UNDEFINED": false
-               }
+               },
+               "audio": "EN,ES,JA,RU"
           },
           "ratings": {
                "position": "left",
                "alignment": "center",
-               "imgSize": "110px",
-               "padding": "15px",
+               "imgSize": "230px",
+               "padding": "30px",
                "space": "50px",
                "color": "#0005",
                "fontFamily": "Roboto",
-               "fontSize": "80px",
-               "iconSpace": "32px",
+               "fontSize": "150px",
+               "iconSpace": "35px",
                "textColor": "white",
                "config": {
                     "IMDB": true,
@@ -200,6 +239,18 @@
                     "TMDB": true
                }
           },
-          "width": 1200
+          "certifications": {
+               "config": {
+                    "NC-17": true,
+                    "R": true,
+                    "PG-13": false,
+                    "PG": false,
+                    "G": false,
+                    "NR": false
+               }
+          },
+          "output": "folder.jpg",
+          "width": 2000,
+          "height": 3000
      }
 }
