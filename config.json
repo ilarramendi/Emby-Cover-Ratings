@@ -6,6 +6,8 @@
           "url": "https://192.168.1.7:8989",
           "apiKey": ""
      },
+     "defaultAudio": "",
+     "englishUSA": true,
      "episode": {
           "mediainfo": {
                "position": "top",
@@ -25,7 +27,7 @@
                     "SDR": true,
                     "UNDEFINED": false
                },
-               "audio": "EN,ES,JA,RU"
+               "audio": "ENG,SPA,JPN,POR,FRE,ITA,DAN,KOR,RUS,SWE,ZHO,HIN"
           },
           "ratings": {
                "position": "right",
@@ -47,8 +49,8 @@
           },
           "certifications": {
                "config": {
-                    "NC-17": true,
-                    "R": true,
+                    "NC-17": false,
+                    "R": false,
                     "PG-13": false,
                     "PG": false,
                     "G": false,
@@ -57,7 +59,7 @@
           },
           "width": 1920,
           "height": 1080,
-          "generateImages": true
+          "generateImages": false
      },
      "movie": {
           "mediainfo": {
@@ -78,7 +80,7 @@
                     "SDR": true,
                     "UNDEFINED": false
                },
-               "audio": "EN,ES,JA,RU"
+               "audio": "ENG,SPA,JPN,POR,FRE,ITA,DAN,KOR,RUS,SWE,ZHO,HIN"
           },
           "ratings": {
                "position": "left",
@@ -100,9 +102,9 @@
           },
           "certifications": {
                "config": {
-                    "NC-17": true,
-                    "R": true,
-                    "PG-13": true,
+                    "NC-17": false,
+                    "R": false,
+                    "PG-13": false,
                     "PG": false,
                     "G": false,
                     "NR": false
@@ -131,7 +133,7 @@
                     "SDR": true,
                     "UNDEFINED": false
                },
-               "audio": "EN,ES,JA,RU"
+               "audio": "ENG,SPA,JPN,POR,FRE,ITA,DAN,KOR,RUS,SWE,ZHO,HIN"
           },
           "ratings": {
                "position": "right",
@@ -163,7 +165,8 @@
           },
           "output": "thumb.jpg",
           "width": 1920,
-          "height": 1080
+          "height": 1080,
+          "generateImages": false
      },
      "season": {
           "mediainfo": {
@@ -184,7 +187,7 @@
                     "SDR": true,
                     "UNDEFINED": false
                },
-               "audio": "EN,ES,JA,RU"
+               "audio": "ENG,SPA,JPN,POR,FRE,ITA,DAN,KOR,RUS,SWE,ZHO,HIN,USA"
           },
           "ratings": {
                "position": "left",
@@ -206,8 +209,8 @@
           },
           "certifications": {
                "config": {
-                    "NC-17": true,
-                    "R": true,
+                    "NC-17": false,
+                    "R": false,
                     "PG-13": false,
                     "PG": false,
                     "G": false,
@@ -237,7 +240,7 @@
                     "SDR": true,
                     "UNDEFINED": false
                },
-               "audio": "EN,ES,JA,RU"
+               "audio": "ENG,SPA,JPN,POR,FRE,ITA,DAN,KOR,RUS,SWE,ZHO,HIN,USA"
           },
           "ratings": {
                "position": "left",
@@ -259,8 +262,8 @@
           },
           "certifications": {
                "config": {
-                    "NC-17": true,
-                    "R": true,
+                    "NC-17": false,
+                    "R": false,
                     "PG-13": false,
                     "PG": false,
                     "G": false,

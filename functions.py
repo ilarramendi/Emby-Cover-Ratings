@@ -15,7 +15,12 @@ from exif import Image as imgTag
 
 extensions = ['mkv', 'mp4', 'avi']
 minVotes = 5
-logLevel = 5
+logLevel = 2
+
+def getLanguage(conf, languages, englishUSA):
+    for lg in conf.split(','):
+        if lg in languages: return 'USA' if lg == 'ENG' and englishUSA else lg
+    return False
 
 def setLogLevel(level):
     global logLevel
@@ -214,8 +219,8 @@ def getEpisodes(folder, season, getAll): # {int: str,...} => {enumber: epath,...
             episodes[int(nm[0])] = fl
     return episodes
 
-def getSeasonsMetadata(imdbid, tmdbid, seasons, omdbApi, tmdbApi, episodeMediainfo, minvotes, title, missingCover, overWrite): # {'seasons': {int: {'episodes': {}, 'ratings': {}, 'path': str, 'mediainfo'?: [str]}}, 'mediainfo'?: [str]}
-    metadata = {'seasons': {}}
+def getSeasonsMetadata(imdbid, tmdbid, seasons, omdbApi, tmdbApi, episodeMediainfo, title, missingCover, overWrite): # {'seasons': {int: {'episodes': {}, 'ratings': {}, 'path': str, 'mediainfo'?: [str]}}, 'mediainfo'?: [str]}
+    metadata = {}
     for path, sn in seasons:
         season = {'episodes': {}, 'ratings': {}, 'path': path}
         eps = getEpisodes(path, sn, missingCover or overWrite or not exists(path + '/folder.jpg'))
@@ -255,11 +260,8 @@ def getSeasonsMetadata(imdbid, tmdbid, seasons, omdbApi, tmdbApi, episodeMediain
         if avr != 0: season['ratings']['IMDB'] = avr
         avr = avg([season['episodes'][ep]['ratings']['TMDB'] for ep in season['episodes'] if 'TMDB' in season['episodes'][ep]['ratings']])
         if avr != 0: season['ratings']['TMDB'] = avr
-        if episodeMediainfo:
+        if episodeMediainfo: # TODO move this to a function
             mediaFiles = []
-            res = []
-            codec = []
-            hdr = []
             for ex in extensions: mediaFiles += glob(join(path, '*.' + ex)) # TODO call getEpisodes instead of this
             for fl in mediaFiles:
                 ep = findall('[Ss]\d{1,3}[Ee](\d{1,4})', fl) 
@@ -267,25 +269,10 @@ def getSeasonsMetadata(imdbid, tmdbid, seasons, omdbApi, tmdbApi, episodeMediain
                     ep = int(ep[0])
                     minfo = getMediaInfo(fl)   
                     if minfo:
-                        hdr.append(minfo['metadata'][0])
-                        res.append(minfo['metadata'][1])
-                        if minfo['metadata'][2] != "UNKNOWN":
-                            codec.append(minfo['metadata'][2])
                         season['episodes'][ep]['mediainfo'] = minfo['metadata']
-            if len(hdr) > 0 and len(res) > 0 and len(codec) > 0:
-                season['mediainfo'] = [frequent(hdr), frequent(res), frequent(codec)]
-        if season != {'episodes': {}, 'ratings': {}, 'path': path}: metadata['seasons'][sn] = season
+                        season['episodes'][ep]['language'] = minfo['language']
+        if season != {'episodes': {}, 'ratings': {}, 'path': path}: metadata[sn] = season
 
-    res = []
-    codec = []
-    hdr = []
-    for mt in metadata['seasons']:
-        if 'mediainfo' in metadata['seasons'][mt]:
-            minfo = metadata['seasons'][mt]['mediainfo']
-            hdr.append(minfo[0])
-            res.append(minfo[1])
-            codec.append(minfo[2])
-    if len(hdr) > 0 and len(res) > 0 and len(codec) > 0: metadata['mediainfo'] = [frequent(hdr), frequent(codec), frequent(res)]
     return metadata
 
 def getSeasons(folder):
