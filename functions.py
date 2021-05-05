@@ -126,10 +126,8 @@ def updateMetadata(metadata, interval, omdbApi, tmdbApi, scrapin):
                 metadata['mediainfoDate'] = datetime.now().strftime("%d/%m/%Y")
         if (datetime.now() - datetime.strptime(metadata['metadataDate'], '%d/%m/%Y')) >= timedelta(days=interval):
             getMetadata(metadata, omdbApi, tmdbApi, scrapin)
-    else:
-        print('Episode metadata update TODO')
-
-        
+    else: print('Episode metadata update TODO') # TODO metadata update
+   
 def getMetadata(mt, omdbApi, tmdbApi, scraping):
     mt['metadataDate'] = datetime.now().strftime("%d/%m/%Y")
     mt['ratings'] = {}

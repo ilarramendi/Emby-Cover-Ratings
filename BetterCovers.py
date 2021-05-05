@@ -31,9 +31,10 @@ def generateTasks(metadata, overWrite):
         'title': metadata['title'],
         'overwrite': overWrite,
         'generateImage': path if metadata['type'] in ['episode', 'backdrop'] and config[metadata['type']]['generateImages'] else False,
-        'mediainfo': metadata['mediainfo'],
+        'mediainfo': deepcopy(metadata['mediainfo']),
         'ratings': {},
         'ageRating': ''}
+    tsk['mediainfo']['languages'] = ''
     
     if tsk['mediainfo']['color'] == 'HDR' and tsk['mediainfo']['resolution'] == 'UHD' and conf['mediainfo']['config']['color']['UHD-HDR']:
         tsk['mediainfo']['color'] = 'UHD-HDR'
@@ -46,10 +47,9 @@ def generateTasks(metadata, overWrite):
         else:
             for lg in conf['mediainfo']['audio'].split(','):
                 if lg in metadata['mediainfo']['languages']:
-                    tsk['mediainfo']['languages'] = lg
+                    tsk['mediainfo'][pr] = lg
                     break
-            
-    
+    if tsk['mediainfo']['languages'] == '': print(json.dumps(tsk, indent=5))
     if 'ratings' in metadata:
         for rt in metadata['ratings']:
             if conf['ratings']['config'][rt]: tsk['ratings'][rt] = metadata['ratings'][rt] 
