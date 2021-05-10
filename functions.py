@@ -76,11 +76,6 @@ def generateCSS(config):
 
     return body
 
-def getConfigEnabled(conf):
-    for cf in conf:
-        if conf[cf]: return True
-    return False
-
 def frequent(list):
     if len(list) == 0: return ''
     count = 0
@@ -134,7 +129,8 @@ def getMetadata(mt, omdbApi, tmdbApi, scraping):
     mt['ratings'] = {}
     mt['ageRating'] = 'NR'
     mt['certifications'] = []
-    
+    mt['productionCompanies'] = []
+
     if tmdbApi != '': 
         result = False  
         if 'TMDBID' not in mt['ids']:
@@ -168,7 +164,10 @@ def getMetadata(mt, omdbApi, tmdbApi, scraping):
             
             if 'title' in res: mt['title'] = res['title']
             elif 'name' in res: mt['title'] = res['name'] 
-        
+            
+            if 'production_companies' in res:
+                for pc in res['production_companies']:
+                    if pc['logo_path']: mt['productionCompanies'].append({'id': pc['id'], 'name': pc['name'], 'logo': 'https://image.tmdb.org/t/p/original' + pc['logo_path']})
         else: log('No results found on TMDB for: ', 3, 1)
           
     if len(omdbApi) > 0 and ('IMDBID' in mt['ids'] or 'title' in mt):
@@ -187,7 +186,7 @@ def getMetadata(mt, omdbApi, tmdbApi, scraping):
                     if rt['Source'] == 'Rotten Tomatoes' and rt['Value'] != 'N/A':
                         mt['ratings']['RT'] = {'icon': 'RT' if int(rt['Value'][:-1]) >= 60 else 'RT-LS', 'value': str(int(rt['Value'][:-1]) / 10).rstrip('0').rstrip('.')}
                         break
-            if 'Title' in res and 'title' not in mt and not mt['title']: mt['title'] = res['Title']
+            if 'Title' in res and 'title' not in mt and not mt['title']: mt['title'] = res['Title'] 
         else: log('No results found on OMDB for: ' + name + ('(' + year + ')' if year else ''), 3, 1)
     
     if scraping['textlessPosters'] and 'TMDBID' in mt['ids']:
@@ -225,7 +224,7 @@ def getMediaInfo(file, defaultLanguage):
     out2 = getstatusoutput('ffprobe "' + file + '" -show_streams -v quiet')
     info = {'color': '', 'resolution': '', 'codec': '', 'source': '', 'languages': [] if defaultLanguage == '' else [defaultLanguage]}
     nm = file.lower()
-    info['source'] = 'BR' if 'blueray' in nm else 'DVD' if 'dvd' in nm else 'WEBRIP' if 'webrip' in nm else 'WEBDL' if 'web-dl' in nm else ''
+    info['source'] = 'BR' if ('bluray' in nm or 'bdremux' in nm) else 'DVD' if 'dvd' in nm else 'WEBRIP' if 'webrip' in nm else 'WEBDL' if 'web-dl' in nm else ''
     video = False
 
     if out[0] != 0: 
@@ -251,12 +250,14 @@ def getMediaInfo(file, defaultLanguage):
         else: log('Unsupported video codec: ' + video['codec_name'].upper(), 3, 3)
     else: log('Video codec not found for: ' + file, 3, 3)
     
-    lng = []
     for s in out:
         if s['codec_type'] == 'audio' and 'tags' in s and 'language' in s['tags']:
-            lng.append(s['tags']['language'].upper())
-    if lng != []: info['languages'] = lng
-
+            info['languages'].append(s['tags']['language'].upper())
+    lng = []
+    for lang in info['languages']:
+        if lang not in lng: lng.append(lang)
+    info['languages'] = lng
+    
     return info
 
 def downloadImage(url, retry, src): # Boolean
@@ -378,8 +379,8 @@ def getSeasons(folder, coverName, backdropName, title):
             for ex in extensions: eps += glob(join(fl, '*.' + ex))
             for ep in eps: 
                 mc = findall('S0*' + res[0] + 'E0*(\d+)', ep)
-                if len(mc) == 1: episodes[int(mc[0])] = {'path': ep, 'hasCover': exists(ep.rpartition('.')[0] + '.jpg'), 'type': 'episode', 'title': title + ' Season: ' + res[0] + ' Episode: ' + mc[0]}
-            seasons[int(res[0])] = {'path': fl, 'episodes': episodes, 'hasCover': exists(join(fl, coverName)), 'hasBackdrop': exists(join(fl, backdropName)), 'type': 'season', 'title': title + ' Season: ' + res[0]}
+                if len(mc) == 1: episodes[int(mc[0])] = {'path': ep, 'hasCover': exists(ep.rpartition('.')[0] + '.jpg'), 'type': 'episode', 'title': title + ' (Season: ' + res[0] + ' Episode: ' + mc[0] + ')'}
+            seasons[int(res[0])] = {'path': fl, 'episodes': episodes, 'hasCover': exists(join(fl, coverName)), 'hasBackdrop': exists(join(fl, backdropName)), 'type': 'season', 'title': title + ' (Season: ' + res[0] + ')'}
 
     return seasons
   
@@ -400,54 +401,44 @@ def generateIMage2(task, config, thread):
         else:
             log('Error generating screenshot with ffmpeg', 1, 1)
             return False
-    HTML = coverHTML
-    dictionary = {
-        'top': '$horizontal $start',
-        'bottom': '$horizontal $end',
-        'left': '$vertical $start',
-        'right': '$vertical $end'
-    }
+    try:
+        with open(join(workDirectory, 'media', 'covers', task['cover'] + '.html')) as html:
+            HTML = html.read()
+    except:
+        log('Error opening: ' + join(workDirectory, 'media', 'covers', task['cover'] + '.html'), 1, 0)
+        return False
 
-    align = dictionary[config['ratings']['position']].replace('$', 'r')
-    align += ' ra' + config['ratings']['alignment'] + ' '
-    align += dictionary[config['mediainfo']['position']].replace('$', 'm')
-    align += ' ma' + config['mediainfo']['alignment']
-    HTML = HTML.replace('containerClass', align)
-    HTML = HTML.replace('$IMGSRC', thread + '-sc.png' if imageGenerated else task['image'])
-
-    HTML += '\n<style>\n' + generateCSS(config) + '\n.container {width:' + str(config['width']) + 'px; height:' + str(config['height']) + 'px}\n</style>\n'
-    
     rts = ''
     minfo = ''
-
-    for rt in task['ratings']: rts += "<div class = 'ratingContainer'><img src='" + join('..', 'media', 'ratings', task['ratings'][rt]['icon'] + '.png') + "' class='ratingIcon'><label class='ratingText'>" + str(task['ratings'][rt]['value']) + "</label></div>\n"
+    pcs = ''
+    
+    for rt in task['ratings']: rts += "<div class = 'ratingContainer ratings-" + rt + "'><img src= '" + join('..', 'media', 'ratings', task['ratings'][rt]['icon'] + '.png') + "' class='ratingIcon'><label class='ratingText'>" + str(task['ratings'][rt]['value']) + "</label></div>\n\t\t"
     for mi in task['mediainfo']:
         if task['mediainfo'][mi] != '':
             pt = join('..', 'media', 'mediainfo' if mi != 'languages' else 'languages', task['mediainfo'][mi] + '.png')
-            minfo += "<div class='mediainfoImgContainer'><img src='" + pt + "' class='mediainfoIcon'></div>\n"  
-
+            minfo += "<div class='mediainfoImgContainer mediainfo-" + task['mediainfo'][mi] + "'><img src= '" + pt + "' class='mediainfoIcon'></div>\n\t\t\t"  
+    for pc in task['productionCompanies']:
+        pcs += "<img src='" + pc['logo'] + "' class='producionCompany producionCompany-" + str(pc['id']) +  "'/>\n\t\t\t\t"
+    
     if task['ageRating'] != '':
-        with open(join('..', 'media', 'certifications', task['ageRating'] + '.svg'), 'r') as svg:
-            HTML = HTML.replace('<!--CERTIFICATION-->', svg.read())
+        pt = join('..', 'media', 'ageRatings', task['ageRating'] + '.png')
+        HTML = HTML.replace('<!--AGERATING-->', "<img class='ageRating' src='" + pt + "'/>")
     
-    if task['overlay'] != '':
-        with open(join(workDirectory, 'media', 'overlays', task['overlay'] + '.html')) as overlay:
-            HTML = overlay.read().replace('<!--CONTAINER-->', HTML)
-    
+    HTML = HTML.replace('$IMGSRC', thread + '-sc.png' if imageGenerated else task['image'])
+    HTML = HTML.replace('<!--TITLE-->', task['title'])
     HTML = HTML.replace('<!--RATINGS-->', rts)
     HTML = HTML.replace('<!--MEDIAINFO-->', minfo)
+    HTML = HTML.replace('<!--PRODUCTIONCOMPANIES-->', pcs)
 
     with open(join(workDirectory, 'threads', thread + '.html'), 'w') as out:
         out.write(HTML)
-
+    
     i = 0
-    # --no-background
-    #command = 'cutycapt --url="file://' + join(workDirectory, 'threads', thread + '.html') + '" --delay=2000 --min-width=500 --min-height=500 --out="' + join(workDirectory, 'threads', thread + '.jpg') + '"'
-    command = ['wkhtmltoimage', '--javascript-delay', '2000', '--transparent', 'file://' + join(workDirectory, 'threads', thread + '.html'), join(workDirectory, 'threads', thread + '.jpg')]
+    command = ['wkhtmltoimage', '--javascript-delay', '2000', '--enable-local-file-access', '--transparent', 'file://' + join(workDirectory, 'threads', thread + '.html'), join(workDirectory, 'threads', thread + '.png')]
     while i < 3 and not call(command, stdout=DEVNULL, stderr=DEVNULL) == 0: i += 1
     if i < 3:
-        tagImage(join(workDirectory, 'threads', thread + '.jpg'))
-        if call(['mv', '-f', join(workDirectory, 'threads', thread + '.jpg'), task['out']]) == 0:
+        #tagImage(join(workDirectory, 'threads', thread + '.png'))
+        if call(['mv', '-f', join(workDirectory, 'threads', thread + '.png'), task['out']]) == 0:
             log('Succesfully generated ' + ('cover' if task['type'] != 'backdrop' else 'backdrop') + ' image for: ' + task['title'] + ' in ' + str(round(time.time() - st)) + 's', 2, 2)
             return True
         log('Error moving to: ' + task['out'], 3, 3)
@@ -463,3 +454,40 @@ def generateMediaImage(path, thread):
     else:
         log('Error generating screenshot with ffmpeg for: ' + path, 3, 3)
         return False
+
+def getCover(mt, covers):
+    def ratingsOk(ratings):
+        for rt in ratings:
+            if rt not in mt['ratings']: return False
+            value = float(ratings[rt][1:])
+            rating = float(mt['ratings'][rt]['value'])
+            if ratings[rt][0] == '>':
+                if rating <= value: return False
+            elif rating >= value: return False
+        return True
+    
+    def arrayOk(cover, metadata):
+        for pr in cover:
+            if pr not in metadata: return False
+        return True
+
+    def mediainfoOk(mediainfo):
+        for pr in mediainfo:
+            if pr == 'languages':
+                if not arrayOk(mediainfo['languages'], mt['mediainfo']['languages']):
+                    return False
+            elif mediainfo[pr] != mt['mediainfo'][pr]: return False
+        return True
+    
+    def ageRatingOk(rating):
+        order = ['G', 'PG', 'PG-13', 'R', 'NC-17', 'NR']
+        if order.indexOf(rating) < order.indexof(mt['ageRating']): return False
+
+    for cover in covers:
+        if 'type' not in cover or cover['type'] == '*' or mt['type'] in cover['type'].split(','):
+            if 'ratings' not in cover or ratingsOk(cover['ratings']): 
+                if 'mediainfo' not in cover or mediainfoOk(cover['mediainfo']):
+                    if 'ageRating' not in cover or ageRatingOk(cover['ageRating']):
+                        if 'productionCompanies' not in cover or arrayOk(cover['productionCompanies'], [pc['id'] for pc in mt['productionCompanies']]):
+                            return cover['cover']
+    return 'newCover'        

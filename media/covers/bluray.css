@@ -1,0 +1,27 @@
+.wrapper {
+    border: 10px solid blue;
+    border-radius: 10px;
+    box-sizing: content-box;
+}
+
+.image {
+    height: 260px;
+    margin: 20px;
+}
+
+.mediainfo-BR {
+    display: none;
+}
+
+.overlay {
+    border: 10px solid blue;
+    border-radius: 20px 50px 50px 20px;
+    background-color: rgb(33, 87, 168);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 30px 10px 0;
+    height: min-content;
+    width: min-content;
+}
