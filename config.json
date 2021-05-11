@@ -95,12 +95,12 @@
                "LB": true
           },
           "ageRatings": {
-               "NC-17": false,
+               "NC-17": true,
                "R": true,
                "PG-13": true,
                "PG": true,
                "G": true,
-               "NR": false
+               "NR": true
           },
           "productionCompanies": true,
           "output": "folder.png"

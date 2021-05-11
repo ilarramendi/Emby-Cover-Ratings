@@ -120,10 +120,11 @@ def updateMetadata(metadata, interval, omdbApi, tmdbApi, scrapin):
             if len(mediaFiles) == 1:
                 metadata['mediainfo'] = getMediaInfo(mediaFiles[0])
                 metadata['mediainfoDate'] = datetime.now().strftime("%d/%m/%Y")
-        if (datetime.now() - datetime.strptime(metadata['metadataDate'], '%d/%m/%Y')) >= timedelta(days=interval):
+            else: log('No media file found on: ' + metadata['path'], 3, 3)
+        if (datetime.now() - datetime.strptime(metadata['metadataDate'], '%d/%m/%Y')) >= timedelta(days=interval) or 'cover' not in metadata or 'backdrop' not in metadata:
             getMetadata(metadata, omdbApi, tmdbApi, scrapin)
     else: log('Episode metadata update TODO', 0, 3) # TODO metadata update
-   
+
 def getMetadata(mt, omdbApi, tmdbApi, scraping):
     mt['metadataDate'] = datetime.now().strftime("%d/%m/%Y")
     mt['ratings'] = {}
@@ -228,7 +229,7 @@ def getMediaInfo(file, defaultLanguage):
     video = False
 
     if out[0] != 0: 
-        log('Error getting media info, exit code: ' + str(out[0]) + '\n' + str(out[1]), 1, 1)
+        log('Error getting media info for: "' + file + '", exit code: ' + str(out[0]) + '\n' + str(out[1]), 1, 1)
         return info
     
     out = json.loads(out[1])['streams']
@@ -418,11 +419,11 @@ def generateIMage2(task, config, thread):
             pt = join('..', 'media', 'mediainfo' if mi != 'languages' else 'languages', task['mediainfo'][mi] + '.png')
             minfo += "<div class='mediainfoImgContainer mediainfo-" + task['mediainfo'][mi] + "'><img src= '" + pt + "' class='mediainfoIcon'></div>\n\t\t\t"  
     for pc in task['productionCompanies']:
-        pcs += "<img src='" + pc['logo'] + "' class='producionCompany producionCompany-" + str(pc['id']) +  "'/>\n\t\t\t\t"
+        pcs += "<div class='pcWrapper'><img src='" + pc['logo'] + "' class='producionCompany producionCompany-" + str(pc['id']) +  "'/></div>\n\t\t\t\t"
     
     if task['ageRating'] != '':
-        pt = join('..', 'media', 'ageRatings', task['ageRating'] + '.png')
-        HTML = HTML.replace('<!--AGERATING-->', "<img class='ageRating' src='" + pt + "'/>")
+        with open(join(workDirectory, 'media', 'ageRatings', task['ageRating'] + '.svg'), 'r') as svg:
+            HTML = HTML.replace('<!--AGERATING-->', svg.read())
     
     HTML = HTML.replace('$IMGSRC', thread + '-sc.png' if imageGenerated else task['image'])
     HTML = HTML.replace('<!--TITLE-->', task['title'])
@@ -434,7 +435,7 @@ def generateIMage2(task, config, thread):
         out.write(HTML)
     
     i = 0
-    command = ['wkhtmltoimage', '--javascript-delay', '2000', '--enable-local-file-access', '--transparent', 'file://' + join(workDirectory, 'threads', thread + '.html'), join(workDirectory, 'threads', thread + '.png')]
+    command = ['wkhtmltoimage', '--cache-dir', join(workDirectory, 'cache'), '--javascript-delay', '2000', '--enable-local-file-access', '--transparent', 'file://' + join(workDirectory, 'threads', thread + '.html'), join(workDirectory, 'threads', thread + '.png')]
     while i < 3 and not call(command, stdout=DEVNULL, stderr=DEVNULL) == 0: i += 1
     if i < 3:
         #tagImage(join(workDirectory, 'threads', thread + '.png'))

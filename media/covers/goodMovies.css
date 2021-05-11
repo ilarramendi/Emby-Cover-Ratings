@@ -1,7 +1,9 @@
 .wrapper {
-    border: 10px solid blue;
-    border-radius: 10px;
+    border: 10px solid rgb(0, 0, 175);
+    border-radius: 40px 40px 60px 60px;
     box-sizing: content-box;
+    margin-bottom: 20px;
+    overflow: hidden;
 }
 
 .title {
@@ -10,14 +12,15 @@
 }
 
 .overlay {
-    border: 10px solid blue;
-    border-radius: 20px 50px 50px 20px;
-    background-color: #3264a8;
+    border: 12px solid rgb(0, 0, 175);
+    border-radius: 50px 50px 40px 40px;
+    background-color: #3269a8;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 20px 30px 10px 0;
+    padding-top: 20px;
     height: min-content;
     width: min-content;
+    margin: 1px;
 }

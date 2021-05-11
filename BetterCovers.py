@@ -37,8 +37,8 @@ def generateTasks(metadata, overWrite):
         'cover': functions.getCover(metadata, config['covers']),
         'productionCompanies': deepcopy(metadata['productionCompanies']) if conf['productionCompanies'] else []}
     tsk['mediainfo']['languages'] = ''
-
-    if tsk['mediainfo']['color'] == 'HDR' and tsk['mediainfo']['resolution'] == 'UHD' and conf['mediainfo']['color']['UHD-HDR']:
+    
+        if tsk['mediainfo']['color'] == 'HDR' and tsk['mediainfo']['resolution'] == 'UHD' and conf['mediainfo']['color']['UHD-HDR']:
         tsk['mediainfo']['color'] = 'UHD-HDR'
         tsk['mediainfo']['resolution'] = ''
 
@@ -228,7 +228,7 @@ if not exists(join(workDirectory, 'config.json')):
 
 loadConfig(join(workDirectory, 'config.json'))
 if config['tmdbApi'] == '' and config['omdbApi'] == '':
-    log('A single api key is needed to work', 1, 0)
+    log('A single api key is needed to work (TMDB recommended)', 1, 0)
     exit() 
 # endregion
 
