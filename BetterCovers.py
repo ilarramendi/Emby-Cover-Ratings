@@ -26,7 +26,7 @@ def generateTasks(metadata, overWrite):
     conf = config[metadata['type']]
     tsks = []
     tsk = {
-        'out': join(metadata['path'], conf['output']) if metadata['type'] != 'episode' else metadata['path'].rpartition('.')[0] + '.jpg',
+        'out': [join(metadata['path'], pt) for pt in conf['output'].replace('$NAME', metadata['path'].rpartition('.')[0].rpartition('/')[0]).split(',')],
         'type': metadata['type'],
         'title': metadata['title'],
         'overwrite': overWrite,
@@ -35,10 +35,11 @@ def generateTasks(metadata, overWrite):
         'ratings': {},
         'ageRating': '',
         'cover': functions.getCover(metadata, config['covers']),
-        'productionCompanies': deepcopy(metadata['productionCompanies']) if conf['productionCompanies'] else []}
+        'productionCompanies': deepcopy(metadata['productionCompanies']) if conf['productionCompanies'] else [],
+        'certifications': []}
     tsk['mediainfo']['languages'] = ''
     
-        if tsk['mediainfo']['color'] == 'HDR' and tsk['mediainfo']['resolution'] == 'UHD' and conf['mediainfo']['color']['UHD-HDR']:
+    if tsk['mediainfo']['color'] == 'HDR' and tsk['mediainfo']['resolution'] == 'UHD' and conf['mediainfo']['color']['UHD-HDR']:
         tsk['mediainfo']['color'] = 'UHD-HDR'
         tsk['mediainfo']['resolution'] = ''
 
@@ -52,21 +53,24 @@ def generateTasks(metadata, overWrite):
                     tsk['mediainfo'][pr] = lg
                     break
 
-    if 'ratings' in metadata:
-        for rt in metadata['ratings']:
-            if conf['ratings'][rt]: 
-                tsk['ratings'][rt] = deepcopy(metadata['ratings'][rt]) 
-                if config['usePecentage']:
-                    tsk['ratings'][rt]['value'] = str(int(float(metadata['ratings'][rt]['value']) * 10)) + '%'
+    for rt in metadata['ratings']:
+        if conf['ratings'][rt]: 
+            tsk['ratings'][rt] = deepcopy(metadata['ratings'][rt]) 
+            if config['usePecentage']:
+                tsk['ratings'][rt]['value'] = str(int(float(metadata['ratings'][rt]['value']) * 10)) + '%'
+    
+    for cr in metadata['certifications']:
+        if conf['certifications'][cr]: tsk['certifications'].append(cr)
 
-    if 'ageRating' in metadata and conf['ageRatings'][metadata['ageRating']]: tsk['ageRating'] = metadata['ageRating']
-
+    if conf['ageRatings'][metadata['ageRating']]:
+        tsk['ageRating'] = metadata['ageRating']
+    
     imgNm = 'backdrop' if metadata['type'] == 'backdrop' else 'cover'
     if imgNm in metadata: tsk['image'] = metadata[imgNm]
 
     if overWrite or not exists(tsk['out']):
         if ('image' in tsk or tsk['generateImage']) and ('mediainfo' in tsk or 'ratings' in tsk): tsks.append(tsk)
-    else: log('Existing cover image found for: ' + title + (' S' + str(season) if season else '') + ('E' + str(episode) if episode else ''), 3, 3)
+    else: log('Existing cover image found for: ' + title, 3, 3)
 
     if metadata['type'] == 'tv':
         for sn in metadata['seasons']:
@@ -99,7 +103,7 @@ def processFolder(folder):
         metadata = {'ids': {}, 'path': folder}
         mediaFiles = functions.getMediaFiles(folder)
         metadata['title'], metadata['year'] = getName(folder)
-        metadata['seasons'] = functions.getSeasons(folder, config['season']['output'], config['backdrop']['output'], metadata['title'])
+        metadata['seasons'] = functions.getSeasons(folder, config['season']['output'], config['backdrop']['output'], config['episode']['output'], metadata['title'])
         metadata['type'] ='tv' if len(metadata['seasons']) > 0 else 'movie'
 
         if metadata['type'] == 'tv': # Get IDS from NFO
@@ -122,7 +126,7 @@ def processFolder(folder):
             metadata = functions.getSeasonsMetadata(metadata,
                 config['omdbApi'],
                 config['tmdbApi'],
-                not (exists(folder + '/' + config['tv']['output']) or exists(folder + '/' + config['backdrop']['output'])),
+                not (all([exists(join(folder, op)) for op in config['tv']['output'].split(',')]) or all([exists(join(folder, op)) for op in config['backdrop']['output'].split(',')])),
                 overWrite,
                 config['defaultAudio'])
         db[folder] = deepcopy(metadata)

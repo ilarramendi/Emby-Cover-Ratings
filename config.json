@@ -1,5 +1,5 @@
 {
-     "version": 2,
+     "version": 3,
      "tmdbApi": "",
      "omdbApi": "",
      "agent": {
@@ -59,6 +59,7 @@
                "NR": false
           },
           "productionCompanies": true,
+          "output": "$NAME.png",
           "generateImages": false
      },
      "movie": {
@@ -102,6 +103,10 @@
                "G": true,
                "NR": true
           },
+          "certifications": {
+               "RT-CF": true,
+               "MTC-MS": true
+          },
           "productionCompanies": true,
           "output": "folder.png"
      },
@@ -123,10 +128,10 @@
                     "HEVC": true
                },
                "source": {
-                    "BR": true,
+                    "BR": false,
                     "WEBDL": false,
                     "WEBRIP": false,
-                    "DVD": true
+                    "DVD": false
                },
                "audio": "ENG,SPA,JPN,POR,FRE,ITA,DAN,KOR,RUS,SWE,ZHO,HIN,AZE,IND,DUT,POL"
           },
@@ -146,8 +151,12 @@
                "G": false,
                "NR": false
           },
+          "certifications": {
+               "RT-CF": true,
+               "MTC-MS": true
+          },
           "productionCompanies": true,
-          "output": "thumb.png",
+          "output": "thumb.png,backdrop.png",
           "generateImages": false
      },
      "season": {

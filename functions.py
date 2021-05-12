@@ -50,7 +50,7 @@ def log(text, type = 0, level = 2): # 0 = Normal, 1 = Error, 2 = Success, 3 = Wa
         msg += '\033[0m' if type != 0 else ''
         print((datetime.now().strftime("[%m/%d/%Y %H:%M:%S] --> ") if logLevel >= 3 else '') + msg)
         with open(join(workDirectory, 'BetterCovers.log'), 'a') as log:
-            log.write(datetime.now().strftime("[%m/%d/%Y %H:%M:%S] --> ") + msg + '\n')
+            log.write('[' + ['Info', 'Error', 'Success', 'Warning'][level] + datetime.now().strftime("][%m/%d/%Y %H:%M:%S] --> ") + text + '\n')
 
 def generateCSS(config):
     minfo = config['mediainfo']
@@ -211,7 +211,7 @@ def getMetadata(mt, omdbApi, tmdbApi, scraping):
         if 'IMDB' in IMDB:
             mt['ratings']['IMDB'] = {'icon': 'IMDB', 'value': IMDB['IMDB']}
         if 'MTC' in IMDB: 
-            mt['ratings']['IMDB'] = {'icon': 'MTC-MS' if IMDB['MTC-MS'] else 'MTC', 'value': IMDB['MTC']}        
+            mt['ratings']['IMDB'] = {'icon': 'MTC-MS' if IMDB['MTC-MS'] else 'MTC', 'value': IMDB['MTC']} # TODO fix this?   
         if IMDB['MTC-MS']: certifications.append('MTC-MS')
 
     LB = mt['type'] == 'movie' and scraping['LB'] and searchLB(mt['ids']['IMDBID'] if 'IMDB' in mt['ids'] else False, mt['title'], mt['year'])
@@ -370,7 +370,7 @@ def getSeasonsMetadata(metadata, omdbApi, tmdbApi, force, overWrite, defaultLang
     mt['mediainfo'] = getParentMediainfo(mt['seasons'])
     return mt
 
-def getSeasons(folder, coverName, backdropName, title):
+def getSeasons(folder, coverName, backdropName, episodeName, title):
     seasons = {}
     for fl in glob(join(folder, '*')):
         res = findall('.*\/[Ss]eason[ ._-](\d{1,3})', fl)
@@ -380,8 +380,8 @@ def getSeasons(folder, coverName, backdropName, title):
             for ex in extensions: eps += glob(join(fl, '*.' + ex))
             for ep in eps: 
                 mc = findall('S0*' + res[0] + 'E0*(\d+)', ep)
-                if len(mc) == 1: episodes[int(mc[0])] = {'path': ep, 'hasCover': exists(ep.rpartition('.')[0] + '.jpg'), 'type': 'episode', 'title': title + ' (Season: ' + res[0] + ' Episode: ' + mc[0] + ')'}
-            seasons[int(res[0])] = {'path': fl, 'episodes': episodes, 'hasCover': exists(join(fl, coverName)), 'hasBackdrop': exists(join(fl, backdropName)), 'type': 'season', 'title': title + ' (Season: ' + res[0] + ')'}
+                if len(mc) == 1: episodes[int(mc[0])] = {'path': ep, 'hasCover': exists(join(fl, episodeName.replace('$NAME', ep.rpartition('.')[0].rpartition('/')[0]))), 'type': 'episode', 'title': title + ' (Season: ' + res[0] + ' Episode: ' + mc[0] + ')'}
+            seasons[int(res[0])] = {'path': fl, 'episodes': episodes, 'hasCover': ell([exists(join(fl, cv)) for cv in coverName.split(',')]), 'hasBackdrop': exists(join(fl, backdropName)), 'type': 'season', 'title': title + ' (Season: ' + res[0] + ')'}
 
     return seasons
   
@@ -412,15 +412,19 @@ def generateIMage2(task, config, thread):
     rts = ''
     minfo = ''
     pcs = ''
+    cert = ''
     
-    for rt in task['ratings']: rts += "<div class = 'ratingContainer ratings-" + rt + "'><img src= '" + join('..', 'media', 'ratings', task['ratings'][rt]['icon'] + '.png') + "' class='ratingIcon'><label class='ratingText'>" + str(task['ratings'][rt]['value']) + "</label></div>\n\t\t"
+    for rt in task['ratings']: 
+        rts += "<div class = 'ratingContainer ratings-" + rt + "'><img src= '" + join('..', 'media', 'ratings', task['ratings'][rt]['icon'] + '.png') + "' class='ratingIcon'/><label class='ratingText'>" + str(task['ratings'][rt]['value']) + "</label></div>\n\t\t"
     for mi in task['mediainfo']:
         if task['mediainfo'][mi] != '':
             pt = join('..', 'media', 'mediainfo' if mi != 'languages' else 'languages', task['mediainfo'][mi] + '.png')
             minfo += "<div class='mediainfoImgContainer mediainfo-" + task['mediainfo'][mi] + "'><img src= '" + pt + "' class='mediainfoIcon'></div>\n\t\t\t"  
     for pc in task['productionCompanies']:
         pcs += "<div class='pcWrapper'><img src='" + pc['logo'] + "' class='producionCompany producionCompany-" + str(pc['id']) +  "'/></div>\n\t\t\t\t"
-    
+    for cr in task['certifications']:
+        cert += '<img src= "' + join('..', 'media', 'ratings', cr + '.png') + '" class="certification"/>'
+
     if task['ageRating'] != '':
         with open(join(workDirectory, 'media', 'ageRatings', task['ageRating'] + '.svg'), 'r') as svg:
             HTML = HTML.replace('<!--AGERATING-->', svg.read())
@@ -430,6 +434,7 @@ def generateIMage2(task, config, thread):
     HTML = HTML.replace('<!--RATINGS-->', rts)
     HTML = HTML.replace('<!--MEDIAINFO-->', minfo)
     HTML = HTML.replace('<!--PRODUCTIONCOMPANIES-->', pcs)
+    HTML = HTML.replace('<!--CERTIFICATIONS-->', cert)
 
     with open(join(workDirectory, 'threads', thread + '.html'), 'w') as out:
         out.write(HTML)
@@ -439,7 +444,7 @@ def generateIMage2(task, config, thread):
     while i < 3 and not call(command, stdout=DEVNULL, stderr=DEVNULL) == 0: i += 1
     if i < 3:
         #tagImage(join(workDirectory, 'threads', thread + '.png'))
-        if call(['mv', '-f', join(workDirectory, 'threads', thread + '.png'), task['out']]) == 0:
+        if all([call(['cp', '-f', join(workDirectory, 'threads', thread + '.png'), fl]) == 0 for fl in task['out']]):
             log('Succesfully generated ' + ('cover' if task['type'] != 'backdrop' else 'backdrop') + ' image for: ' + task['title'] + ' in ' + str(round(time.time() - st)) + 's', 2, 2)
             return True
         log('Error moving to: ' + task['out'], 3, 3)

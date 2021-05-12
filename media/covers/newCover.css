@@ -21,7 +21,6 @@
     justify-content: space-evenly;
     align-items: center;
     width: min-content;
-    min-width: 250px;
     height: 100%;
     padding: 15px;
     position: relative;
@@ -37,7 +36,7 @@
     padding: 0;
 }
 
-.ratingIcon {width: 250px;}
+.ratingIcon {width: 200px}
 
 .ratingText {
     font-size: 160px;
@@ -62,6 +61,7 @@
     padding: 30px 10px;
     display: flex;
 }
+
 .mediainfoContainer:empty {height: 0;}
 
 .mediainfoImgContainer {
@@ -96,8 +96,8 @@
 
 .pcWrapper {
     display: flex;
-    max-height: 250px;
-    max-width: 700px;
+    max-height: 150px;
+    max-width: 400px;
     margin: 0 10px 10px 0
 }
 
