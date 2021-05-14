@@ -69,7 +69,8 @@ def generateTasks(metadata, overWrite):
     if imgNm in metadata: tsk['image'] = metadata[imgNm]
 
     if overWrite or not exists(tsk['out']):
-        if ('image' in tsk or tsk['generateImage']) and ('mediainfo' in tsk or 'ratings' in tsk): tsks.append(tsk)
+        if 'image' in tsk or tsk['generateImage']: tsks.append(tsk)
+        else: log('No ' + ('backdrop' if tsk['type'] == 'backdrop' else 'cover') + ' image found for: ' + tsk['title'], 3, 3)
     else: log('Existing cover image found for: ' + title, 3, 3)
 
     if metadata['type'] == 'tv':
@@ -78,61 +79,32 @@ def generateTasks(metadata, overWrite):
             for ep in metadata['seasons'][sn]['episodes']:
                 tsks += generateTasks(metadata['seasons'][sn]['episodes'][ep], overWrite)
 
-    if metadata['type'] in ['movie', 'tv', 'season']:
+    if metadata['type'] in ['movie', 'tv']:
         metadata['type'] = 'backdrop'
         tsks += generateTasks(metadata, overWrite)
 
     return tsks
 
-def getName(folder):
-    inf = findall("\/([^\/]+)[ \.]\(?(\d{4})\)?", folder)
-    if len(inf) == 0: 
-        inf = findall("\/([^\/]+)$", folder)
-        if len(inf) == 0:
-            log('Cant parse name from: ' + folder, 3, 1)
-            return [False, False]
-        else: return [inf[0], False]
-    else: return [inf[0][0].translate({'.': ' ', '_': ' '}), inf[0][1]]
-
 def processFolder(folder):
     st = time.time()
-    if folder in db:
-        functions.updateMetadata(db[folder], config['metadataUpdateInterval'], config['omdbApi'], config['tmdbApi'], config['scraping'])
-        metadata = deepcopy(db[folder])
-    else:
+    if folder not in db:
         metadata = {'ids': {}, 'path': folder}
         mediaFiles = functions.getMediaFiles(folder)
-        metadata['title'], metadata['year'] = getName(folder)
-        metadata['seasons'] = functions.getSeasons(folder, config['season']['output'], config['backdrop']['output'], config['episode']['output'], metadata['title'])
-        metadata['type'] ='tv' if len(metadata['seasons']) > 0 else 'movie'
+        metadata['title'], metadata['year'] = functions.getName(folder)
+        forceSeasons = functions.updateSeasons(config['season']['output'], config['backdrop']['output'], config['episode']['output'], metadata)
+        metadata['type'] = 'tv' if len(metadata['seasons']) > 0 else 'movie'
 
-        if metadata['type'] == 'tv': # Get IDS from NFO
-            nfo = join(folder, 'tvshow.nfo')
-            if exists(nfo): metadata['ids'] = functions.readNFO(nfo)
-        elif len(mediaFiles) == 1:
-            nfo = mediaFiles[0].rpartition('.')[0] + '.nfo'
-            if exists(nfo): metadata['ids'] = functions.readNFO(nfo)
+        nfo = join(folder, 'tvshow.nfo') if metadata['type'] == 'tv' else (mediaFiles[0].rpartition('.')[0] + '.nfo') if len(mediaFiles) > 0 else join(folder, 'FALSE')
+        if exists(nfo): metadata['ids'] = functions.readNFO(nfo)
+        db[folder] = metadata
+    else:
+        metadata = db[folder]
+        forceSeasons = functions.updateSeasons(config['season']['output'], config['backdrop']['output'], config['episode']['output'], metadata)
 
-        if metadata['type'] == 'movie': # Get mediainfo
-            if len(mediaFiles) == 1:
-                metadata['mediainfoDate'] = datetime.now().strftime("%d/%m/%Y")
-                metadata['mediainfo'] = functions.getMediaInfo(mediaFiles[0], config['defaultAudio'])
-        else: log('Error finding media file on: ' + folder, 3, 3)
-
-        functions.getMetadata(metadata, config['omdbApi'], config['tmdbApi'], config['scraping'])
-        if len(metadata['ids']) == 0 and not metadata['title']: return log('No id or name can be found for: ' + folder, 1, 1)  
-
-        if metadata['type'] == 'tv':
-            metadata = functions.getSeasonsMetadata(metadata,
-                config['omdbApi'],
-                config['tmdbApi'],
-                not (all([exists(join(folder, op)) for op in config['tv']['output'].split(',')]) or all([exists(join(folder, op)) for op in config['backdrop']['output'].split(',')])),
-                overWrite,
-                config['defaultAudio'])
-        db[folder] = deepcopy(metadata)
+    functions.getMetadata(metadata, config['omdbApi'], config['tmdbApi'], config['scraping'], config['defaultAudio'], forceSeasons)
 
     global tasks, tasksLength
-    generatedTasks = generateTasks(metadata, overWrite)
+    generatedTasks = generateTasks(deepcopy(metadata), overWrite)
     tasks += generatedTasks
     tasksLength += len(generatedTasks)
     log(str(len(generatedTasks)) + ' tasks generated for: ' + metadata['title'] + ' in ' + str(timedelta(seconds=round(time.time() - st))), 2)
@@ -142,7 +114,7 @@ def loadConfig(cfg):
         with open(cfg, 'r') as js:
             global config 
             config = json.load(js)
-            if 'version' not in config or config['version'] != 2:
+            if 'version' not in config or config['version'] != 3:
                 log('Wrong version of config file, please update!', 1, 0)
                 exit()
             if '-omdb' in argv and argv[argv.index('-omdb') + 1] != '': config['omdbApi'] = argv[argv.index('-omdb') + 1]
@@ -183,7 +155,7 @@ def processTasks():
             while True:
                 if not (thrs[i] and thrs[i].is_alive()):
                     tsk = tasks.pop()
-                    thread = Thread(target=functions.generateIMage2, args=(tsk, config[tsk['type']], str(i).zfill(thrsLength)))
+                    thread = Thread(target=functions.processTask, args=(tsk, config[tsk['type']], str(i).zfill(thrsLength)))
                     thread.start()
                     thrs[i] = thread
                     j += 1
@@ -270,7 +242,9 @@ except KeyboardInterrupt:
     functions.logLevel = 0
     GENERATING.join()
     PROCESSING.join()
-    
+
+with open(join(workDirectory, 'db.json'), 'w') as js:
+    js.write(json.dumps(db, indent=7))    
 #call(['rm', '-r', join(workDirectory, 'threads')])
 
 # region Update agent library

@@ -15,7 +15,7 @@
      },
      "defaultAudio": "ENG",
      "englishUSA": true,
-     "metadataUpdateInterval": 14,
+     "mediainfoUpdateInterval": 14,
      "usePecentage": false,
      "episode": {
           "mediainfo": {
@@ -57,6 +57,10 @@
                "PG": false,
                "G": false,
                "NR": false
+          },
+          "certifications": {
+               "RT-CF": true,
+               "MTC-MS": true
           },
           "productionCompanies": true,
           "output": "$NAME.png",
@@ -200,6 +204,10 @@
                "G": false,
                "NR": false
           },
+          "certifications": {
+               "RT-CF": true,
+               "MTC-MS": true
+          },
           "productionCompanies": true,
           "output": "folder.png"
      },
@@ -243,6 +251,10 @@
                "PG": false,
                "G": false,
                "NR": false
+          },
+          "certifications": {
+               "RT-CF": true,
+               "MTC-MS": true
           },
           "productionCompanies": true,
           "output": "folder.png"
