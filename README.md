@@ -5,12 +5,11 @@ This project was inspired by [RPDB](https://ratingposterdb.com/)!
 Better-Covers is a script to automaticaly generate cover images (and backdrops) with embeded ratings, mediainfo, language and age certifications! 
 
 # Examples
-
 <img src="https://user-images.githubusercontent.com/30437204/117456553-b83fca00-af1e-11eb-9f24-21cf36a4ec08.png" width="49.7%"> <img src="https://user-images.githubusercontent.com/30437204/117389362-a16b8a00-aec2-11eb-8c9c-67a896c5dd41.png" width="49.7%">
 <img src="https://user-images.githubusercontent.com/30437204/117921796-bdf33200-b2c7-11eb-91dd-3ef86848c722.png" width="100%">
 
 Cover images are saved as folder.png, episode covers as filename.png and backdrops as backdrop.png and thumb.jpg (customizable).     
-Most important things can be customized in the [config](#configjson) file, and and visual changes can be done adjusting the html/css [cover](##covers) files.    
+Most important things can be customized in the [config](#configjson) file, and and visual changes can be done adjusting html/css [cover](##covers) files.    
 After executing the script you have to refresh the library on Emby/Plex/Jellyfin for this to take effect! (Or configure the agent in the config file to automaticaly update the library!)
 
 # Downloading
@@ -37,7 +36,6 @@ To get the metadata / cover images it uses [TMDB](https://www.themoviedb.org/), 
 
 And to get missing metadata and missing ratings it uses [OMDBApi](http://www.omdbapi.com/) to get a free api key visit [this](http://www.omdbapi.com/apikey.aspx) link.  
 (OMDB is not realy needed but it covers some missing ratings)  
-<!--The script can work without any api key, but it only will generate covers for episodes with embeded mediainfo if generateImages is enabled, in the future this will also be posible with existing cover images.-->
 
 To save the api keys edit ```config.json``` or execute the script like this to automaticaly save them:  
  ```./CoverRatings '/Movies/*' -tmdb TMDBApiKey -omdb OMDBApiKey```  
