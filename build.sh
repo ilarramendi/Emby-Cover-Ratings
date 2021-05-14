@@ -4,5 +4,4 @@ pyinstaller -F BetterCovers.py \
     --add-data ./media/ratings:/files/media/ratings \
     --add-data ./media/covers:/files/media/covers \
     --add-data ./media/ageRatings:/files/media/ageRatings \
-    --add-data ./config.json:/files \
-    --add-data ./cover.*:/files
+    --add-data ./config.json:/files
