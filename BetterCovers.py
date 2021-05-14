@@ -245,7 +245,7 @@ except KeyboardInterrupt:
 
 with open(join(workDirectory, 'db.json'), 'w') as js:
     js.write(json.dumps(db, indent=7))    
-#call(['rm', '-r', join(workDirectory, 'threads')])
+call(['rm', '-r', join(workDirectory, 'threads')])
 
 # region Update agent library
 if running: 

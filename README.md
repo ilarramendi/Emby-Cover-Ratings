@@ -82,26 +82,15 @@ TV Shows:
 # Planned features
 - [ ] Option to save images on Agent metadata folder to improve menu loading time (if metadata is on faster drive)
 - [ ] Different themes (suggestions are apreciate)
-- [ ] Improve to run periodicaly
+- [x] Improve to run periodicaly
 - [ ] Add to PyPi?
-- [ ] Plugin for most common media servers
 - [ ] Use existing cover
-- [x] Episodes support, get cover from internet or extract with ffmpeg
 - [ ] Add aditional mediainfo properties (dolby, ATMOS, audio channels)
-- [x] Add studio/provider
 - [ ] Add aditional ratings providers (suggestions?)
-- [x] Add certifications
 - [ ] Add python dependencies file
-- [x] Add docker container
-- [x] Make docker container fully customizable like script
-- [x] Flags for audio language
-- [x] Add backdrop support
 - [ ] Add connection with Sonarr and Radarr api
-- [x] Add connection to emby and jellyfin api
 - [ ] Add connection to plex api
-- [x] Add age certifications
-- [x] Add source (blueray, web, dvd...)
-- [x] Add letterboxd
+- [ ] Add original downloaded image cache for faster cover creation (wkhtmltopdf cache not working)
 
 # Customization
 The idea of this script is to be fully customizable, for this purpouse you can change the values on each section of the config.json file, edit the Ratings/MediaInfo images or even create your own css/html files!
