@@ -239,6 +239,7 @@ def getMetadata(mt, omdbApi, tmdbApi, scraping, defaultLanguage, forceSeasons):
             mediaFiles = getMediaFiles(mt['path'])
             if len(mediaFiles) >= 1:
                 success, mt['mediainfo'] = getMediaInfo(mediaFiles[0], defaultLanguage)
+                mt['mediaFile'] = mediaFiles[0]
                 if success: mt['mediainfoDate'] = datetime.now().strftime("%d/%m/%Y")   
             else: log('No media file found on: ' + metadata['path'], 3, 3)
         else: log('No need to update mediainfo for: ' + mt['title'], 3, 3)
@@ -303,7 +304,7 @@ def downloadImage(url, retry, src): # Unused, probably will be used in the futur
     return False
 
 def avg(lst):
-    return "{:.1f}".format(sum(lst) / len(lst)) if len(lst) > 0 else "0"
+    return "{:.1f}".format(sum([float(vl) for vl in lst]) / len(lst)) if len(lst) > 0 else "0"
 
 def getParentMediainfo(childrens):
     res = {}
@@ -346,7 +347,7 @@ def getSeasonMetadata(sn, season, ids, productionCompanies, omdbApi, tmdbApi, fo
                         if 'still_path' in ep and ep['still_path'] != 'N/A' and ep['still_path']:
                             season['episodes'][num]['cover'] = 'https://image.tmdb.org/t/p/original' + ep['still_path']
                         if 'vote_average' in ep and ep['vote_average'] != 'N/A' and 'vote_count' in ep and ep['vote_count'] > minVotes:
-                            season['episodes'][num]['ratings']['TMDB'] = {'icon': 'TMDB', 'value': float(ep['vote_average'])}
+                            season['episodes'][num]['ratings']['TMDB'] = {'icon': 'TMDB', 'value': "{:.1f}".format(float(ep['vote_average']))}
                         if 'id' in ep: 
                             season['episodes'][num]['ids']['TMDBID'] = ep['id']
                 rts = [season['episodes'][ep]['ratings']['TMDB']['value'] for ep in season['episodes'] if 'TMDB' in season['episodes'][ep]['ratings']]
@@ -388,7 +389,7 @@ def getSeasonMetadata(sn, season, ids, productionCompanies, omdbApi, tmdbApi, fo
 def getSeasonMediainfo(season, defaultLanguage):
     for ep in season['episodes']:
         if (datetime.now() - datetime.strptime(season['episodes'][ep]['mediainfoDate'], '%d/%m/%Y')) > timedelta(days=mediainfoUpdateInterval):
-            success, season['episodes'][ep]['mediainfo'] = getMediaInfo(season['episodes'][ep]['path'], defaultLanguage)
+            success, season['episodes'][ep]['mediainfo'] = getMediaInfo(season['episodes'][ep]['mediaFile'], defaultLanguage)
             if success: season['episodes'][ep]['mediainfoDate'] = datetime.now().strftime("%d/%m/%Y")
     
     season['mediainfo'] = getParentMediainfo(season['episodes'])
@@ -420,7 +421,8 @@ def updateSeasons(coverName, backdropName, episodeName, mt):
                 mc = findall('S0*' + res[0] + 'E0*(\d+)', ep)
                 if len(mc) == 1:
                     sns[str(int(res[0]))]['episodes'][str(int(mc[0]))] = {
-                        'path': ep,
+                        'mediaFile': ep,
+                        'path': ep.rpartition('/')[0],
                         'type': 'episode',
                         'title': mt['title'] + ' (Season: ' + res[0] + ' Episode: ' + mc[0] + ')',
                         'ids': {},
@@ -513,11 +515,14 @@ def processTask(task, config, thread):
     command = ['wkhtmltoimage', '--cache-dir', join(workDirectory, 'cache'), '--javascript-delay', '2000', '--enable-local-file-access', '--transparent', 'file://' + join(workDirectory, 'threads', thread + '.html'), join(workDirectory, 'threads', thread + '.png')]
     while i < 3 and not call(command, stdout=DEVNULL, stderr=DEVNULL) == 0: i += 1
     if i < 3:
-        #tagImage(join(workDirectory, 'threads', thread + '.png'))
-        if all([call(['cp', '-f', join(workDirectory, 'threads', thread + '.png'), fl]) == 0 for fl in task['out']]):
-            log('Succesfully generated ' + ('cover' if task['type'] != 'backdrop' else 'backdrop') + ' image for: ' + task['title'] + ' in ' + str(round(time.time() - st)) + 's', 2, 2)
-            return True
-        log('Error moving to: ' + task['out'], 3, 3)
+        # tagImage(join(workDirectory, 'threads', thread + '.png'))
+        for fl in task['out']:
+            cm = call(['cp', '-f', join(workDirectory, 'threads', thread + '.png'), fl])
+            if cm != 0:
+                log('Error moving to: ' + fl, 3, 3)
+                return False  
+        log('Succesfully generated ' + ('cover' if task['type'] != 'backdrop' else 'backdrop') + ' image for: ' + task['title'] + ' in ' + str(round(time.time() - st)) + 's', 2, 2)
+        return True 
     else: log('Error generating image with wkhtmltoimage', 3, 3)
     log('Error generating image for: ' + task['title'], 1, 1)
     return False

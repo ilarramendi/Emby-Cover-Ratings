@@ -18,15 +18,16 @@ tasks = []
 running = True
 processing = True
 tasksLength = 0
-dbVersion = 1
+dbVersion = 2
 db = {'version': dbVersion}
 
 # region Functions
 def generateTasks(metadata, overWrite):
     conf = config[metadata['type']]
     tsks = []
+    pts = conf['output'].replace('$NAME', (metadata['path'] if metadata['type'] in ['tv', 'season', 'backdrop'] else metadata['mediaFile']).rpartition('.')[0].rpartition('/')[2])
     tsk = {
-        'out': [join(metadata['path'], pt) for pt in conf['output'].replace('$NAME', metadata['path'].rpartition('.')[0].rpartition('/')[0]).split(',')],
+        'out': [join(metadata['path'], pt) for pt in pts.split(';')],
         'type': metadata['type'],
         'title': metadata['title'],
         'overwrite': overWrite,
@@ -38,7 +39,7 @@ def generateTasks(metadata, overWrite):
         'productionCompanies': deepcopy(metadata['productionCompanies']) if conf['productionCompanies'] else [],
         'certifications': []}
     tsk['mediainfo']['languages'] = ''
-    
+
     if tsk['mediainfo']['color'] == 'HDR' and tsk['mediainfo']['resolution'] == 'UHD' and conf['mediainfo']['color']['UHD-HDR']:
         tsk['mediainfo']['color'] = 'UHD-HDR'
         tsk['mediainfo']['resolution'] = ''
