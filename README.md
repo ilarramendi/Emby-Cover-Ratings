@@ -101,7 +101,7 @@ Most options on this part just turn on and off icons / ratings these are the dif
 | ------------------- | -------------------------------------------------- | -------------------------- | 
 | generateImages      | Extract images from media instead of downloading   | true or false              |
 | audio               | Audio languages to use (uses first language found) | ENG,SPA,JPN (ISO 639-2/T)  |
-| output              | Output file names separated by ','                 | poster.jpg,cover.png       |
+| output              | Output file names separated by ';'                 | poster.jpg;cover.png       |
 | productionCompanies | Show production companies logos                    | true or false              |
 
 ### Global
